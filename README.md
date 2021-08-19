@@ -1,12 +1,5 @@
 
-Grid.ai Session example of running [getting_started.html](https://docs.nvidia.com/deeplearning/dali/user-guide/docs/examples/getting_started.html) 
-
-- [Jupyter Notebook: Initialize conda](#jupyter-notebook-initialize-conda)
-- [Jupyter Notebook: Download Tools](#jupyter-notebook-download-tools)
-- [Jupyter Notebook: Run getting_started.ipynb](#jupyter-notebook-run-getting_startedipynb)
-- [Jupyter Notebook: Run getting_started.ipynb](#jupyter-notebook-run-getting_startedipynb-1)
-- [Start a Grid.ai `g4dn.xlarge — 1 x T4` session](#start-a-gridai-g4dnxlarge--1-x-t4-session)
-- [Start a Jupyter notebook](#start-a-jupyter-notebook)
+Grid.ai Session example of running NVIDIA [DALI](https://github.com/NVIDIA/DALI) examples [getting_started.html](https://docs.nvidia.com/deeplearning/dali/user-guide/docs/examples/getting_started.html) and [video_reader_simple_example.ipynb](https://github.com/NVIDIA/DALI/blob/main/docs/examples/sequence_processing/video/video_reader_simple_example.ipynb)
   
 Login into [Grid.ai](#start-a-gridai-g4dnxlarge--1-x-t4-session), start a Session with GPU instance, and [Start Jupyter Notebook](#start-a-jupyter-notebook).
 
