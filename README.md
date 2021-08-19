@@ -15,8 +15,9 @@ exit
 
 # Download Tools 
 Run the following `bash` command(s)
-- install [`git-lfs`](https://git-lfs.github.com) (required for DALI_extra).  Note: Git LFS is used there to download large videos from the used in `DALI_extra`. If git-lfs isn’t installed, then git cloned repository will be missing those files.
-- 
+
+- install [`git-lfs`](https://git-lfs.github.com). Note: Git LFS is used there to download large videos from the used in `DALI_extra`. If git-lfs isn’t installed, then git cloned repository will be missing those files.
+
 ```bash
 # Instructions from 
 #   https://github.com/git-lfs/git-lfs/wiki/Installation#ubuntu and 
