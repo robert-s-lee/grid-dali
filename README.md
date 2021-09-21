@@ -9,7 +9,7 @@ Run the following `bash` command(s)
 ```bash
 ldconfig -p | grep libnvcuvid.so
 # make sure ldconfig returns correctly with this
-#        libnvcuvid.so.1 (libc6,x86-64) => /lib64/libnvcuvid.so.1
+#        libnvcuvid.so.1 (libc6,x86-64) => /usr/lib/x86_64-linux-gnu/libnvcuvid.so.1
 exit
 ```
 
