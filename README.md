@@ -43,7 +43,7 @@ export DALI_EXTRA_PATH="/home/jovyan/DALI_extra"
 EOF
 # for notebooks
 ipython profile create
-cat > ~/.ipython/profile_default/startup/oo-dali.py <<EOF
+cat > ~/.ipython/profile_default/startup/00-dali.py <<EOF
 import os
 os.environ['DALI_EXTRA_PATH'] = "/home/jovyan/DALI_extra"
 EOF
