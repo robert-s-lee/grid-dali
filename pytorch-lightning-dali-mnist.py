@@ -11,7 +11,7 @@
 # 
 # The DALI_EXTRA_PATH environment variable should point to a [DALI extra](https://github.com/NVIDIA/DALI_extra) copy. Please make sure that the proper release tag, the one associated with your DALI version, is checked out.
 
-# In[10]:
+# In[ ]:
 
 
 import torch
@@ -26,8 +26,6 @@ from torch.utils.data import DataLoader
 
 import os
 
-BATCH_SIZE = 64
-
 # workaround for https://github.com/pytorch/vision/issues/1938 - error 403 when downloading mnist dataset
 import urllib
 opener = urllib.request.build_opener()
@@ -40,17 +38,27 @@ urllib.request.install_opener(opener)
 # In[ ]:
 
 
+global args  
 if __name__ == '__main__':
     from configargparse import ArgumentParser
 
     parser = ArgumentParser()
     parser.add_argument('--gpus', type=int, default=0, env_var="MNIST_GPU")
     parser.add_argument('--lr', type=float, default=1e-3, env_var="MNIST_LR")
-    parser.add_argument('--batch_size', type=int, default=32, env_var="MNIST_BATCH_SIZE")
-    parser.add_argument('--max_epochs', type=int, default=10, env_var="MNIST_MAX_EPOCHS")
+    parser.add_argument('--batch_size', type=int, default=64, env_var="MNIST_BATCH_SIZE")
+    parser.add_argument('--max_epochs', type=int, default=1, env_var="MNIST_MAX_EPOCHS")
     parser.add_argument('--data_dir', type=str, default=os.getcwd(), env_var="MNIST_DATA_DIR")
-    parser.add_argument('--num_workers', type=int, default=8)
-    args = parser.parse_args()
+    parser.add_argument('--dali_data_dir', type=str, default=os.getcwd(), env_var="DALI_EXTRA_PATH")
+    parser.add_argument('--num_workers', type=int, default=os.cpu_count())
+    parser.add_argument('--distributed_backend', type=str, default=None, help="use to enable ddp")  # ddp
+
+    if '__file__' in globals():
+        print(__file__)
+        args = parser.parse_args()    # process the arg 
+    else:
+        args = parser.parse_args("")  # take defaults in Jupyter    
+
+print(args) 
 
 
 # In[23]:
@@ -97,16 +105,16 @@ class LitMNIST(LightningModule):
 
   def prepare_data(self):
       # download data only
-      self.mnist_train = MNIST("/home/jovyan/hello-mnist", train=True, download=True, transform=transforms.ToTensor())
+      self.mnist_train = MNIST(args.data_dir, train=True, download=True, transform=transforms.ToTensor())
     
   def setup(self, stage=None):
       # transforms for images
       transform=transforms.Compose([transforms.ToTensor(), 
                                     transforms.Normalize((0.1307,), (0.3081,))])
-      self.mnist_train = MNIST("/home/jovyan/hello-mnist", train=True, download=False, transform=transform)
+      self.mnist_train = MNIST(args.data_dir, train=True, download=False, transform=transform)
 
   def train_dataloader(self):
-       return DataLoader(self.mnist_train, batch_size=64, num_workers=os.cpu_count(), pin_memory=True)
+       return DataLoader(self.mnist_train, batch_size=args.batch_size, num_workers=args.num_workers, pin_memory=True)
 
 
 # And see how it works with CPU
@@ -117,19 +125,15 @@ class LitMNIST(LightningModule):
 from pytorch_lightning.loggers import TensorBoardLogger
 model = LitMNIST()
 logger = TensorBoardLogger("lightning_logs", name="pl_cpu_mnist")
-trainer = Trainer(max_epochs=1, gpus=0, logger=logger)
+trainer = Trainer(max_epochs=args.max_epochs, gpus=0, logger=logger)
 # ddp work only in no-interactive mode, to test it unncoment and run as a script
-# trainer = Trainer(gpus=8, distributed_backend="ddp", max_epochs=5)
+# trainer = Trainer(gpus=8, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs)
 ## MNIST data set is not always available to download due to network issues
 ## to run this part of example either uncomment below line
 trainer.fit(model)
 
 
-# In[ ]:
-
-
-And see how it works with GPU
-
+# And see how it works with GPU
 
 # In[25]:
 
@@ -137,9 +141,9 @@ And see how it works with GPU
 from pytorch_lightning.loggers import TensorBoardLogger
 model = LitMNIST()
 logger = TensorBoardLogger("lightning_logs", name="pl_gpu_mnist")
-trainer = Trainer(max_epochs=1, gpus=1, logger=logger)
+trainer = Trainer(max_epochs=args.max_epochs, gpus=1, logger=logger)
 # ddp work only in no-interactive mode, to test it unncoment and run as a script
-# trainer = Trainer(gpus=8, distributed_backend="ddp", max_epochs=5)
+# trainer = Trainer(gpus=8, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
 ## MNIST data set is not always available to download due to network issues
 ## to run this part of example either uncomment below line
 trainer.fit(model)
@@ -157,7 +161,7 @@ import nvidia.dali.types as types
 from nvidia.dali.plugin.pytorch import DALIClassificationIterator, LastBatchPolicy
 
 # Path to MNIST dataset
-data_path = os.path.join(os.environ['DALI_EXTRA_PATH'], 'db/MNIST/training/')
+data_path = os.path.join(args.dali_data_dir, 'db/MNIST/training/')
 
 @pipeline_def
 def GetMnistPipeline(device, shard_id=0, num_shards=1):
@@ -194,8 +198,8 @@ class DALILitMNIST(LitMNIST):
         device_id = self.local_rank
         shard_id = self.global_rank
         num_shards = self.trainer.world_size
-        mnist_pipeline = GetMnistPipeline(batch_size=BATCH_SIZE, device='gpu', device_id=device_id, shard_id=shard_id,
-                                       num_shards=num_shards, num_threads=os.cpu_count())
+        mnist_pipeline = GetMnistPipeline(batch_size=args.batch_size, device='gpu', device_id=device_id, shard_id=shard_id,
+                                       num_shards=num_shards, num_threads=args.num_workers)
         self.train_loader = DALIClassificationIterator(mnist_pipeline, reader_name="Reader",
                                                        last_batch_policy=LastBatchPolicy.PARTIAL, auto_reset=True)                          
     def train_dataloader(self):
@@ -217,9 +221,9 @@ if 'PL_TRAINER_GPUS' in os.environ:
     os.environ.pop('PL_TRAINER_GPUS')
 model = DALILitMNIST()
 logger = TensorBoardLogger("lightning_logs", name="pl_dali_mnist")
-trainer = Trainer(max_epochs=1, gpus=1, logger=logger)
+trainer = Trainer(max_epochs=args.max_epochs, gpus=1, logger=logger)
 # ddp work only in no-interactive mode, to test it unncoment and run as a script
-# trainer = Trainer(gpus=8, distributed_backend="ddp", max_epochs=5)
+# trainer = Trainer(gpus=8, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
 trainer.fit(model)
 
 
@@ -240,7 +244,7 @@ class BetterDALILitMNIST(LitMNIST):
         device_id = self.local_rank
         shard_id = self.global_rank
         num_shards = self.trainer.world_size
-        mnist_pipeline = GetMnistPipeline(batch_size=BATCH_SIZE, device='gpu', device_id=device_id, shard_id=shard_id, num_shards=num_shards, num_threads=os.cpu_count())
+        mnist_pipeline = GetMnistPipeline(batch_size=args.batch_size, device='gpu', device_id=device_id, shard_id=shard_id, num_shards=num_shards, num_threads=args.num_workers)
 
         class LightningWrapper(DALIClassificationIterator):
             def __init__(self, *kargs, **kvargs):
@@ -270,9 +274,9 @@ if 'PL_TRAINER_GPUS' in os.environ:
     os.environ.pop('PL_TRAINER_GPUS')
 model = BetterDALILitMNIST()
 logger = TensorBoardLogger("lightning_logs", name="pl_dali_iterator_mnist")
-trainer = Trainer(max_epochs=1, gpus=1, logger=logger)
+trainer = Trainer(max_epochs=args.max_epochs, gpus=1, logger=logger)
 # ddp work only in no-interactive mode, to test it unncoment and run as a script
-# trainer = Trainer(gpus=8, distributed_backend="ddp", max_epochs=5)
+# trainer = Trainer(gpus=8, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
 trainer.fit(model)
 
 
