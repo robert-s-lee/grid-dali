@@ -14,6 +14,7 @@
 # In[ ]:
 
 
+import os
 import torch
 from torch.nn import functional as F
 from torch import nn
@@ -23,42 +24,14 @@ from torch.optim import Adam
 from torchvision.datasets import MNIST
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-
-import os
-
-# workaround for https://github.com/pytorch/vision/issues/1938 - error 403 when downloading mnist dataset
-import urllib
-opener = urllib.request.build_opener()
-opener.addheaders = [('User-agent', 'Mozilla/5.0')]
-urllib.request.install_opener(opener)
-
-
-# We will start by implement a training class that uses the native data loader
-
-# In[ ]:
-
-
-global args  
-if __name__ == '__main__':
-    from configargparse import ArgumentParser
-
-    parser = ArgumentParser()
-    parser.add_argument('--gpus', type=int, default=0, env_var="MNIST_GPU")
-    parser.add_argument('--lr', type=float, default=1e-3, env_var="MNIST_LR")
-    parser.add_argument('--batch_size', type=int, default=64, env_var="MNIST_BATCH_SIZE")
-    parser.add_argument('--max_epochs', type=int, default=1, env_var="MNIST_MAX_EPOCHS")
-    parser.add_argument('--data_dir', type=str, default=os.getcwd(), env_var="MNIST_DATA_DIR")
-    parser.add_argument('--dali_data_dir', type=str, default=os.getcwd(), env_var="DALI_EXTRA_PATH")
-    parser.add_argument('--num_workers', type=int, default=os.cpu_count())
-    parser.add_argument('--distributed_backend', type=str, default=None, help="use to enable ddp")  # ddp
-
-    if '__file__' in globals():
-        print(__file__)
-        args = parser.parse_args()    # process the arg 
-    else:
-        args = parser.parse_args("")  # take defaults in Jupyter    
-
-print(args) 
+from pytorch_lightning.loggers import TensorBoardLogger
+'''
+import nvidia.dali as dali
+from nvidia.dali import pipeline_def
+import nvidia.dali.fn as fn
+import nvidia.dali.types as types
+from nvidia.dali.plugin.pytorch import DALIClassificationIterator, LastBatchPolicy
+'''
 
 
 # In[23]:
@@ -117,52 +90,13 @@ class LitMNIST(LightningModule):
        return DataLoader(self.mnist_train, batch_size=args.batch_size, num_workers=args.num_workers, pin_memory=True)
 
 
-# And see how it works with CPU
-
-# In[31]:
-
-
-from pytorch_lightning.loggers import TensorBoardLogger
-model = LitMNIST()
-logger = TensorBoardLogger("lightning_logs", name="pl_cpu_mnist")
-trainer = Trainer(max_epochs=args.max_epochs, gpus=0, logger=logger)
-# ddp work only in no-interactive mode, to test it unncoment and run as a script
-# trainer = Trainer(gpus=8, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs)
-## MNIST data set is not always available to download due to network issues
-## to run this part of example either uncomment below line
-trainer.fit(model)
-
-
-# And see how it works with GPU
-
-# In[25]:
-
-
-from pytorch_lightning.loggers import TensorBoardLogger
-model = LitMNIST()
-logger = TensorBoardLogger("lightning_logs", name="pl_gpu_mnist")
-trainer = Trainer(max_epochs=args.max_epochs, gpus=1, logger=logger)
-# ddp work only in no-interactive mode, to test it unncoment and run as a script
-# trainer = Trainer(gpus=8, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
-## MNIST data set is not always available to download due to network issues
-## to run this part of example either uncomment below line
-trainer.fit(model)
-
-
 # The next step is to define a DALI pipeline that will be used for loading and pre-processing data.
 
 # In[26]:
 
 
-import nvidia.dali as dali
-from nvidia.dali import pipeline_def
-import nvidia.dali.fn as fn
-import nvidia.dali.types as types
-from nvidia.dali.plugin.pytorch import DALIClassificationIterator, LastBatchPolicy
-
-# Path to MNIST dataset
-data_path = os.path.join(args.dali_data_dir, 'db/MNIST/training/')
-
+# NVIDIA Dali pipeline options at https://docs.nvidia.com/deeplearning/dali/user-guide/docs/pipeline.html
+'''
 @pipeline_def
 def GetMnistPipeline(device, shard_id=0, num_shards=1):
     jpegs, labels = fn.readers.caffe2(path=data_path, shard_id=shard_id, num_shards=num_shards, random_shuffle=True, name="Reader")
@@ -180,8 +114,6 @@ def GetMnistPipeline(device, shard_id=0, num_shards=1):
     labels = fn.cast(labels, dtype=types.INT64)
     return images, labels
 
-
-# Now we are ready to modify the training class to use the DALI pipeline we have just defined. Because we want to integrate with PyTorch, we wrap our pipeline with a PyTorch DALI iterator, that can replace the native data loader with some minor changes in the code. The DALI iterator returns a list of dictionaries, where each element in the list corresponds to a pipeline instance, and the entries in the dictionary map to the outputs of the pipeline. For more information, check the documentation of DALIGenericIterator.
 
 # In[27]:
 
@@ -210,24 +142,6 @@ class DALILitMNIST(LitMNIST):
         y = batch[0]["label"].squeeze(-1)
         return (x, y)
 
-
-# We can now run the training
-
-# In[28]:
-
-
-# Even if previous Trainer finished his work it still keeps the GPU booked, force it to release the device.
-if 'PL_TRAINER_GPUS' in os.environ:
-    os.environ.pop('PL_TRAINER_GPUS')
-model = DALILitMNIST()
-logger = TensorBoardLogger("lightning_logs", name="pl_dali_mnist")
-trainer = Trainer(max_epochs=args.max_epochs, gpus=1, logger=logger)
-# ddp work only in no-interactive mode, to test it unncoment and run as a script
-# trainer = Trainer(gpus=8, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
-trainer.fit(model)
-
-
-# For even better integration, we can provide a custom DALI iterator wrapper so that no extra processing is required inside `LitMNIST.process_batch`. Also, PyTorch can learn the size of the dataset this way.
 
 # In[29]:
 
@@ -264,24 +178,68 @@ class BetterDALILitMNIST(LitMNIST):
         return self.train_loader
 
 
-# Let us run the training one more time
-
-# In[30]:
-
-
-# Even if previous Trainer finished his work it still keeps the GPU booked, force it to release the device.
-if 'PL_TRAINER_GPUS' in os.environ:
-    os.environ.pop('PL_TRAINER_GPUS')
-model = BetterDALILitMNIST()
-logger = TensorBoardLogger("lightning_logs", name="pl_dali_iterator_mnist")
-trainer = Trainer(max_epochs=args.max_epochs, gpus=1, logger=logger)
-# ddp work only in no-interactive mode, to test it unncoment and run as a script
-# trainer = Trainer(gpus=8, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
-trainer.fit(model)
-
-
 # In[ ]:
+'''
+
+if __name__ == '__main__':
+    from configargparse import ArgumentParser
+
+    # workaround for https://github.com/pytorch/vision/issues/1938 - error 403 when downloading mnist dataset
+    import urllib
+    opener = urllib.request.build_opener()
+    opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+    urllib.request.install_opener(opener)    
+
+    global args  
+
+    parser = ArgumentParser()
+    parser.add_argument('--gpus', type=int, default=0, env_var="MNIST_GPU")
+    parser.add_argument('--lr', type=float, default=1e-3, env_var="MNIST_LR")
+    parser.add_argument('--batch_size', type=int, default=64, env_var="MNIST_BATCH_SIZE")
+    parser.add_argument('--max_epochs', type=int, default=1, env_var="MNIST_MAX_EPOCHS")
+    parser.add_argument('--data_dir', type=str, default=os.getcwd(), env_var="MNIST_DATA_DIR")
+    parser.add_argument('--dali_data_dir', type=str, default=os.getcwd(), env_var="DALI_EXTRA_PATH")
+    parser.add_argument('--num_workers', type=int, default=os.cpu_count())
+    parser.add_argument('--distributed_backend', type=str, default=None, help="use to enable ddp")  # ddp ddp work only in no-interactive mode,
+
+    if '__file__' in globals():
+        args = parser.parse_args()    # process the arg 
+    else:
+        args = parser.parse_args("")  # take defaults in Jupyter    
 
 
+    # Path to MNIST dataset in DALI
+    data_path = os.path.join(args.dali_data_dir, 'db/MNIST/training/')
 
+    # run with CPU
+    model = LitMNIST()
+    logger = TensorBoardLogger("lightning_logs", name="pl_cpu_mnist")
+    trainer = Trainer(gpus=0, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
+    trainer.fit(model)    
+
+    # run with one GPU
+    if torch.cuda.device_count()>0:
+      model = LitMNIST()
+      logger = TensorBoardLogger("lightning_logs", name="pl_gpu_mnist")
+      trainer = Trainer(gpus=args.gpus, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
+      trainer.fit(model)
+'''
+    if torch.cuda.device_count()>0:
+      # Even if previous Trainer finished his work it still keeps the GPU booked, force it to release the device.
+      if 'PL_TRAINER_GPUS' in os.environ:
+          os.environ.pop('PL_TRAINER_GPUS')
+      model = DALILitMNIST()
+      logger = TensorBoardLogger("lightning_logs", name="pl_dali_mnist")
+      trainer = Trainer(gpus=args.gpus, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
+      trainer.fit(model)
+
+    if torch.cuda.device_count()>0:
+      # Even if previous Trainer finished his work it still keeps the GPU booked, force it to release the device.
+      if 'PL_TRAINER_GPUS' in os.environ:
+          os.environ.pop('PL_TRAINER_GPUS')
+      model = BetterDALILitMNIST()
+      logger = TensorBoardLogger("lightning_logs", name="pl_dali_iterator_mnist")
+      trainer = Trainer(gpus=args.gpus, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
+      trainer.fit(model)      
+'''
 

@@ -68,7 +68,15 @@ Run the following from Jupyter Notebook UI.
 
 ![output](images/Screen%20Shot%202021-08-19%20at%2010.14.17%20AM.png)
 
+# Insturctions on setting up for run
+
+## Create datastore for MDB files in DALI Extra
+```bash
+grid datastore create --source ~/DALI_extra --name dali-extra
+```
+
 # Instructions on Starting Grid.ai Session and Jupyter Notebook
+
 
 ## Start a Grid.ai `g4dn.xlarge — 1 x T4` session
 
