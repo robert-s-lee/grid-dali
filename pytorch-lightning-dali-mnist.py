@@ -25,13 +25,11 @@ from torchvision.datasets import MNIST
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from pytorch_lightning.loggers import TensorBoardLogger
-'''
 import nvidia.dali as dali
 from nvidia.dali import pipeline_def
 import nvidia.dali.fn as fn
 import nvidia.dali.types as types
 from nvidia.dali.plugin.pytorch import DALIClassificationIterator, LastBatchPolicy
-'''
 
 
 # In[23]:
@@ -96,7 +94,6 @@ class LitMNIST(LightningModule):
 
 
 # NVIDIA Dali pipeline options at https://docs.nvidia.com/deeplearning/dali/user-guide/docs/pipeline.html
-'''
 @pipeline_def
 def GetMnistPipeline(device, shard_id=0, num_shards=1):
     jpegs, labels = fn.readers.caffe2(path=data_path, shard_id=shard_id, num_shards=num_shards, random_shuffle=True, name="Reader")
@@ -179,7 +176,6 @@ class BetterDALILitMNIST(LitMNIST):
 
 
 # In[ ]:
-'''
 
 if __name__ == '__main__':
     from configargparse import ArgumentParser
@@ -223,7 +219,7 @@ if __name__ == '__main__':
       logger = TensorBoardLogger("lightning_logs", name="pl_gpu_mnist")
       trainer = Trainer(gpus=args.gpus, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
       trainer.fit(model)
-'''
+
     if torch.cuda.device_count()>0:
       # Even if previous Trainer finished his work it still keeps the GPU booked, force it to release the device.
       if 'PL_TRAINER_GPUS' in os.environ:
@@ -241,5 +237,3 @@ if __name__ == '__main__':
       logger = TensorBoardLogger("lightning_logs", name="pl_dali_iterator_mnist")
       trainer = Trainer(gpus=args.gpus, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
       trainer.fit(model)      
-'''
-
