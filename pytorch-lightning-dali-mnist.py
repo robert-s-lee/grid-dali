@@ -208,21 +208,24 @@ if __name__ == '__main__':
     data_path = os.path.join(args.dali_data_dir, 'db/MNIST/training/')
 
     # run with CPU
-    print("running CPU")
+    print("Running CPU")
+    print("----------------------------")
     model = LitMNIST()
     logger = TensorBoardLogger("lightning_logs", name="pl_cpu_mnist")
     trainer = Trainer(gpus=0, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
     trainer.fit(model)    
 
     # run with one GPU
-    print("running GPU")
+    print("Running GPU")
+    print("----------------------------")
     if torch.cuda.device_count()>0:
       model = LitMNIST()
       logger = TensorBoardLogger("lightning_logs", name="pl_gpu_mnist")
       trainer = Trainer(gpus=args.gpus, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
       trainer.fit(model)
 
-    print("running GPU with DALI")
+    print("Running GPU with DALI")
+    print("----------------------------")
     if torch.cuda.device_count()>0:
       # Even if previous Trainer finished his work it still keeps the GPU booked, force it to release the device.
       if 'PL_TRAINER_GPUS' in os.environ:
@@ -232,7 +235,8 @@ if __name__ == '__main__':
       trainer = Trainer(gpus=args.gpus, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
       trainer.fit(model)
 
-    print("running GPU with Better DALI")
+    print("Running GPU with Better DALI")
+    print("----------------------------")
     if torch.cuda.device_count()>0:
       # Even if previous Trainer finished his work it still keeps the GPU booked, force it to release the device.
       if 'PL_TRAINER_GPUS' in os.environ:
