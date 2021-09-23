@@ -49,7 +49,13 @@ python pytorch-lightning-dali-mnist.py --gpus=1 --dali_data_dir=/home/jovyan/dal
 - run experiments
 ```bash
 grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --data_dir=grid:dali-mnist:1 --dali_data_dir=grid:dali-mnist:1
+
+# fails with datastore error (v2 datastore) not present on session 
 grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --dali_data_dir=grid:dali-mnist:1
+
+# (v1 datastore)
+grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --data_dir=grid:hello-mnist:1 
+
 ```
 
 # TODO Fix 
@@ -57,6 +63,9 @@ grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --
 ## in run - fatal
 
 `grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --dali_data_dir=grid:dali-mnist:1`
+```logs
+[experiment] [2021-09-23T16:53:54.173479+00:00] OSError: [Errno 30] Read-only file system: '/datastores/dali-mnist/MNIST/processed'
+```
 
 - running GPU with DALI
 ```log
