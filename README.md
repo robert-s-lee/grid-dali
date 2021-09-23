@@ -9,7 +9,7 @@ Run the following `bash` command(s)
 ```bash
 ldconfig -p | grep libnvcuvid.so
 # make sure ldconfig returns correctly with this
-#        libnvcuvid.so.1 (libc6,x86-64) => /lib64/libnvcuvid.so.1
+#        libnvcuvid.so.1 (libc6,x86-64) => /usr/lib/x86_64-linux-gnu/libnvcuvid.so.1
 exit
 ```
 
@@ -43,7 +43,7 @@ export DALI_EXTRA_PATH="/home/jovyan/DALI_extra"
 EOF
 # for notebooks
 ipython profile create
-cat > ~/.ipython/profile_default/startup/oo-dali.py <<EOF
+cat > ~/.ipython/profile_default/startup/00-dali.py <<EOF
 import os
 os.environ['DALI_EXTRA_PATH'] = "/home/jovyan/DALI_extra"
 EOF
@@ -69,6 +69,7 @@ Run the following from Jupyter Notebook UI.
 ![output](images/Screen%20Shot%202021-08-19%20at%2010.14.17%20AM.png)
 
 # Instructions on Starting Grid.ai Session and Jupyter Notebook
+
 
 ## Start a Grid.ai `g4dn.xlarge — 1 x T4` session
 
