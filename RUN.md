@@ -22,6 +22,7 @@ python pytorch-lightning-dali-mnist.py --gpus=1 --data_dir=~/DALI_extra --dali_d
 
 # save the datastore that has DALI_extra + MNIST
 grid datastore create --source ~/DALI_extra --name dali-mnist
+watch grid datastore status --name dali-mnist
 
 # pause this session
 grid session pause g4dn-xlarge-1
@@ -48,15 +49,19 @@ python pytorch-lightning-dali-mnist.py --gpus=1 --dali_data_dir=/home/jovyan/dal
 
 - run experiments
 ```bash
-grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --data_dir=grid:dali-mnist:1 --dali_data_dir=grid:dali-mnist:1
+grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --data_dir=grid:dali-mnist:2 --dali_data_dir=grid:dali-mnist:2
 
 # fails with datastore error (v2 datastore) not present on session 
 grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --dali_data_dir=grid:dali-mnist:1
 
 # (v1 datastore)
 grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --data_dir=grid:hello-mnist:1 
-
 ```
+|          | datatore v1 (hello-mnist)|  datastore v2 (dali-mnist) | 
+| session  |       works              |        works
+| run      |       works              |  [Errno 30] Read-only file system: '/datastores/dali-mnist/MNIST/processed'
+
+hello-mnist creates processed.  
 
 # TODO Fix 
 
@@ -80,6 +85,9 @@ there is no log
 ```log
 /home/jovyan/conda/lib/python3.8/site-packages/torchvision/datasets/mnist.py:498: UserWarning: The given NumPy array is not writeable, and PyTorch does not support non-writeable tensors. This means you can write to the underlying (supposedly non-writeable) NumPy array using the tensor. You may want to copy the array to protect its data or make it writeable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at  /pytorch/torch/csrc/utils/tensor_numpy.cpp:180.)
 ```
+
+- MNIST/process is required in run is not required in session (for read only)
+
 
 - on GPU run
 ```log

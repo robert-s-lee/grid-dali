@@ -11,7 +11,7 @@ nvidia-pyindex
 nvidia-dali-cuda110
 
 # the rest
-pytorch-lightning<1.2
+pytorch-lightning
 torch
 torchvision
 ConfigArgParse
