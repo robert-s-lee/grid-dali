@@ -181,6 +181,7 @@ if __name__ == '__main__':
     from configargparse import ArgumentParser
 
     # workaround for https://github.com/pytorch/vision/issues/1938 - error 403 when downloading mnist dataset
+    # fixed in https://github.com/PyTorchLightning/pytorch-lightning/pull/986/files
     import urllib
     opener = urllib.request.build_opener()
     opener.addheaders = [('User-agent', 'Mozilla/5.0')]
@@ -203,10 +204,11 @@ if __name__ == '__main__':
     else:
         args = parser.parse_args("")  # take defaults in Jupyter    
 
+    print(args)
 
     # Path to MNIST dataset in DALI
     data_path = os.path.join(args.dali_data_dir, 'db/MNIST/training/')
-
+'''
     # run with CPU
     print("Running CPU")
     print("----------------------------")
@@ -223,7 +225,7 @@ if __name__ == '__main__':
       logger = TensorBoardLogger("lightning_logs", name="pl_gpu_mnist")
       trainer = Trainer(gpus=args.gpus, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
       trainer.fit(model)
-
+'''
     print("Running GPU with DALI")
     print("----------------------------")
     if torch.cuda.device_count()>0:
