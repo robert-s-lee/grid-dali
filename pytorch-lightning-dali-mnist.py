@@ -208,7 +208,7 @@ if __name__ == '__main__':
 
     # Path to MNIST dataset in DALI
     data_path = os.path.join(args.dali_data_dir, 'db/MNIST/training/')
-'''
+    '''
     # run with CPU
     print("Running CPU")
     print("----------------------------")
@@ -225,7 +225,7 @@ if __name__ == '__main__':
       logger = TensorBoardLogger("lightning_logs", name="pl_gpu_mnist")
       trainer = Trainer(gpus=args.gpus, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
       trainer.fit(model)
-'''
+    '''
     print("Running GPU with DALI")
     print("----------------------------")
     if torch.cuda.device_count()>0:
