@@ -14,4 +14,6 @@ nvidia-dali-cuda110
 pytorch-lightning
 torch
 torchvision
+
+# parser
 ConfigArgParse
