@@ -1,0 +1,21 @@
+# https://docs.github.com/en/actions/learn-github-actions/reusing-workflows
+name: "gridai dali lightning"
+
+on:
+  # push:
+  pull_request:  
+  schedule:
+  # run at 3 min past the hour every day
+  # MIN HOUR DOM MON DOW CMD
+    - cron: 22 2 * * *
+
+jobs:
+  gpu:
+    uses: robert-s-lee/actions/.github/workflows/gridai_run_artifact.yml@main
+    with:
+      script_name: pytorch-lightning-dali-mnist.py
+      grid_args: --localdir --instance_type g4dn.xlarge --dependency_file requirements.txt --framework lightning
+      script_args: --max_epochs 1	
+    secrets:
+      gridai_username: ${{ secrets.GRIDAI_USERNAME }}
+      gridai_key: ${{ secrets.GRIDAI_KEY }}
