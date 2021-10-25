@@ -23,8 +23,8 @@ jobs:
     uses: robert-s-lee/actions/.github/workflows/gridai_run_artifact.yml@main
     with:
       script_name: pytorch-lightning-dali-mnist.py
-      grid_args: --localdir --instance_type g4dn.xlarge --dependency_file requirements.txt --framework lightning --gpus 
-      script_args: --max_epochs 1	--gpus 
+      grid_args: --localdir --instance_type g4dn.xlarge --dependency_file requirements.txt --framework lightning --gpus 1
+      script_args: --max_epochs 1	--gpus 1
     secrets:
       gridai_username: ${{ secrets.GRIDAI_USERNAME }}
       gridai_key: ${{ secrets.GRIDAI_KEY }}      
