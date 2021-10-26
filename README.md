@@ -3,7 +3,25 @@ Grid.ai Session example running NVIDIA [DALI](https://github.com/NVIDIA/DALI) ex
 - From Grid.ai Jupyter Notebook: `File` -> `New` -> `Terminal`
 - From Terminal: `grid session ssh`
 - From VS Code: `Command P` -> `Remote SSH: Connect to Host`
+
+## ssh into Grid.is session
   
+```bash
+grid ssh-keys add lit_key ~/.ssh/id_ed25519.pub
+grid session ssh g4dn.xlarge 
+tmux # 
+```
+
+- setup Conda environment
+```bash
+conda create --yes --name dali python=3.8
+conda activate dali # note you may get prompt to run `conda init bash && exit`
+pip install ipykernel # allow usage with Jupyter notebook
+python -m ipykernel install --user --name=dali # show conda env in Jupyter notebook
+ipython profile create
+```
+- From Grid.ai Jupyter Notebook: `Kernel` -> `Restart Kernel...`
+
 # Check for CUDA library 
 Run the following `bash` command(s)
 ```bash
@@ -30,6 +48,7 @@ git lfs install --skip-repo
 ```bash
 pip3 install pip --upgrade && pip install --extra-index-url https://developer.download.nvidia.com/compute/redist --upgrade nvidia-dali-cuda110
 # DALI examples
+pip3 install 
 git clone https://github.com/NVIDIA/DALI
 git clone https://github.com/NVIDIA/DALI_extra.git
 ```

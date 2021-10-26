@@ -11,6 +11,7 @@ nvidia-pyindex
 nvidia-dali-cuda110
 
 # the rest
+matplotlib
 pytorch-lightning
 torch
 torchvision
