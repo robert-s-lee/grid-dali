@@ -97,8 +97,7 @@ class LitMNIST(LightningModule):
 # NVIDIA Dali pipeline options at https://docs.nvidia.com/deeplearning/dali/user-guide/docs/pipeline.html
 @pipeline_def
 def GetMnistPipeline(device, shard_id=0, num_shards=1):
-    # jpegs, labels = fn.readers.caffe2(path=data_path, shard_id=shard_id, num_shards=num_shards, random_shuffle=True, name="Reader")
-    jpegs, labels = fn.readers.caffe2(path=data_path, shard_id=shard_id, num_shards=num_shards, random_shuffle=True)
+    jpegs, labels = fn.readers.caffe2(path=data_path, shard_id=shard_id, num_shards=num_shards, random_shuffle=True, name="Reader")
     images = fn.decoders.image(jpegs,
                                device='mixed' if device == 'gpu' else 'cpu',
                                output_type=types.GRAY)
