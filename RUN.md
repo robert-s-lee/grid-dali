@@ -58,7 +58,7 @@ python pytorch-lightning-dali-mnist.py --gpus=1 --dali_data_dir=$HOME/dali-mnist
 
 - run experiments
 ```bash
-grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --data_dir=grid:dali-mnist:2 --dali_data_dir=grid:dali-mnist:2
+export name=dali-$(date '+%y%m%d-%H%M%S'); grid run --gpus=1 --instance_type=g4dn.xlarge --dependency_file requirements.txt pytorch-lightning-dali-mnist.py --gpus=1 
 
 # fails with datastore error (v2 datastore) not present on session 
 grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --dali_data_dir=grid:dali-mnist:1
