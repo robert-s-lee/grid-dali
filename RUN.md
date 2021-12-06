@@ -23,7 +23,7 @@ pip install -r requirements.txt
 
 # run to save the MNIST data inside DALI_extra
 # ~ does not work with DALI library
-python pytorch-lightning-dali-mnist.py --gpus=1 --data_dir=$HOME/DALI_extra --dali_data_dir=$HOME/DALI_extra
+python pytorch-lightning-dali-mnist.py --gpus=1
 # hack TODO: figure out why this is required in Run but not in session 
 # SESSION and RUN library mismatch ?? clues
 # https://github.com/PyTorchLightning/pytorch-lightning/pull/986/files 
@@ -58,6 +58,8 @@ python pytorch-lightning-dali-mnist.py --gpus=1 --dali_data_dir=$HOME/dali-mnist
 
 - run experiments
 ```bash
+export name=dali-$(date '+%y%m%d-%H%M%S'); grid run --gpus=1 --instance_type=g4dn.xlarge --dependency_file requirements.txt pytorch-lightning-dali-mnist.py --gpus=1 
+
 grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --data_dir=grid:dali-mnist:2 --dali_data_dir=grid:dali-mnist:2
 
 # fails with datastore error (v2 datastore) not present on session 
