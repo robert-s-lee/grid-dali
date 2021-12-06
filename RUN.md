@@ -24,6 +24,10 @@ pip install -r requirements.txt
 # run to save the MNIST data inside DALI_extra
 # ~ does not work with DALI library
 python pytorch-lightning-dali-mnist.py --gpus=1 --data_dir=$HOME/DALI_extra --dali_data_dir=$HOME/DALI_extra
+
+python pytorch-lightning-dali-mnist.py --gpus=1 
+
+
 # hack TODO: figure out why this is required in Run but not in session 
 # SESSION and RUN library mismatch ?? clues
 # https://github.com/PyTorchLightning/pytorch-lightning/pull/986/files 

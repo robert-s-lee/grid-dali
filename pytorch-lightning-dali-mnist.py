@@ -15,6 +15,7 @@
 
 
 import os
+from pytorch_lightning.accelerators import accelerator
 import torch
 from torch.nn import functional as F
 from torch import nn
@@ -214,7 +215,7 @@ if __name__ == '__main__':
     print("----------------------------")
     model = LitMNIST()
     logger = TensorBoardLogger("lightning_logs", name="pl_cpu_mnist")
-    trainer = Trainer(gpus=0, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
+    trainer = Trainer(gpus=0, accelerator=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
     trainer.fit(model)    
 
     # run with one GPU
@@ -223,7 +224,7 @@ if __name__ == '__main__':
     if torch.cuda.device_count()>0:
       model = LitMNIST()
       logger = TensorBoardLogger("lightning_logs", name="pl_gpu_mnist")
-      trainer = Trainer(gpus=args.gpus, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
+      trainer = Trainer(gpus=args.gpus, accelerator=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
       trainer.fit(model)
 
     print("Running GPU with DALI")
@@ -234,7 +235,7 @@ if __name__ == '__main__':
           os.environ.pop('PL_TRAINER_GPUS')
       model = DALILitMNIST()
       logger = TensorBoardLogger("lightning_logs", name="pl_dali_mnist")
-      trainer = Trainer(gpus=args.gpus, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
+      trainer = Trainer(gpus=args.gpus, accelerator=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
       trainer.fit(model)
 
     print("Running GPU with Better DALI")
@@ -245,5 +246,5 @@ if __name__ == '__main__':
           os.environ.pop('PL_TRAINER_GPUS')
       model = BetterDALILitMNIST()
       logger = TensorBoardLogger("lightning_logs", name="pl_dali_iterator_mnist")
-      trainer = Trainer(gpus=args.gpus, distributed_backend=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
+      trainer = Trainer(gpus=args.gpus, accelerator=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
       trainer.fit(model)      
