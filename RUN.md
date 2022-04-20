@@ -44,7 +44,7 @@ grid session pause g4dn-xlarge-1
 - test on a new session by mounting the datastore 
 ```bash
 # start a session with datastore from the previous step
-grid session create --instance_type g4dn.xlarge --datastore_name dali-mnist --name g4dn-xlarge-2
+grid session create --instance_type g4dn.xlarge --datastore_name dali-mnist --datastore_version 2 --name g4dn-xlarge-2
 grid ssh g4dn-xlarge-2
 
 # verify datastore is mounted
@@ -62,13 +62,16 @@ python pytorch-lightning-dali-mnist.py --gpus=1 --dali_data_dir=$HOME/dali-mnist
 
 - run experiments
 ```bash
-export name=dali-$(date '+%y%m%d-%H%M%S'); grid run --gpus=1 --instance_type=g4dn.xlarge --dependency_file requirements.txt pytorch-lightning-dali-mnist.py --gpus=1 
+export name=dali-$(date '+%y%m%d-%H%M%S'); grid run --name=$name --gpus=1 --instance_type=g4dn.xlarge --dependency_file requirements.txt pytorch-lightning-dali-mnist.py --gpus=1 
 
 # fails with datastore error (v2 datastore) not present on session 
-grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --dali_data_dir=grid:dali-mnist:1
+export name=dali-$(date '+%y%m%d-%H%M%S'); grid run --name=$name --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --dali_data_dir=grid:dali-mnist:2
+
+export name=dali-$(date '+%y%m%d-%H%M%S'); grid run --name ${name} --gpus 1 --instance_type g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus 1 --dali_data_dir grid:dali-mnist:2
+
 
 # (v1 datastore)
-grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --data_dir=grid:hello-mnist:1 
+grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --data_dir=grid:dali-mnist:2 
 ```
 |          | datatore v1 (hello-mnist)|  datastore v2 (dali-mnist) | 
 | session  |       works              |        works
@@ -89,6 +92,8 @@ hello-mnist creates processed.
 ```log
 [experiment] [2021-09-23T16:10:14.670620+00:00] RuntimeError: Tensor for 'out' is on CPU, Tensor for argument #1 'self' is on CPU, but expected them to be on GPU (while checking arguments for addmm)
 ```
+
+grid run --instance_type g4dn.xlarge --datastore_name dali-mnist --datastore_version 2 
 
 `grid run --gpus=1 --instance_type=g4dn.xlarge pytorch-lightning-dali-mnist.py --gpus=1 --data_dir=grid:dali-mnist:1 --dali_data_dir=grid:dali-mnist:1`
 there is no log

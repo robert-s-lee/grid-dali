@@ -1,5 +1,22 @@
 
-Grid.ai Session example running NVIDIA [DALI](https://github.com/NVIDIA/DALI) examples [getting_started.html](https://docs.nvidia.com/deeplearning/dali/user-guide/docs/examples/getting_started.html) and [video_reader_simple_example.ipynb](https://github.com/NVIDIA/DALI/blob/main/docs/examples/sequence_processing/video/video_reader_simple_example.ipynb).  A prerequisite, login into [Grid.ai](#start-a-gridai-g4dnxlarge--1-x-t4-session), start a Session with GPU instance, and [Start Jupyter Notebook](#start-a-jupyter-notebook). To run `bash` commands in this example, one of the following methods can be used: 
+Grid.ai Session example running NVIDIA [DALI](https://github.com/NVIDIA/DALI).  Other Grid.ai NVIDIA examples:
+- Grid.ai NVIDIA [DALI](https://github.com/robert-s-lee/grid-nvidia-dali))
+- Grid.ai NVIDIA [fsi-samples](https://github.com/robert-s-lee/grid-nvidia-fsi-samples)
+
+This guide talks thru NVIDIA examples [getting_started.html](https://docs.nvidia.com/deeplearning/dali/user-guide/docs/examples/getting_started.html) and [video_reader_simple_example.ipynb](https://github.com/NVIDIA/DALI/blob/main/docs/examples/sequence_processing/video/video_reader_simple_example.ipynb).  
+
+# Prerequisite
+## Setup Grid.ai 
+- [Create an Grid.ai account](https://docs.grid.ai/getting-started/getting-started-with-grid#login-steps) with Grid.ai
+- [Create a Grid.ai Session using Product Tour](https://docs.grid.ai/features/sessions#product-tour) 
+- [Delete the test Session](https://docs.grid.ai/features/sessions#delete-a-session)
+
+## Create Grid.ai Session with GPU
+- Create a Grid.ai Session with g4dn.xlarge GPU
+- [Start Jupyter Notebook](https://docs.grid.ai/features/sessions/jupyterlab-with-sessions). 
+
+## Get Bash Access 
+To run `bash` commands in this example, one of the following methods can be used: 
 - From Grid.ai Jupyter Notebook: `File` -> `New` -> `Terminal`
 - From Terminal: `grid session ssh`
 - From VS Code: `Command P` -> `Remote SSH: Connect to Host`
