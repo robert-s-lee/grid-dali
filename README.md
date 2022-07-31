@@ -63,9 +63,9 @@ git lfs install --skip-repo
 
 - install python tools and examples
 ```bash
-pip3 install pip --upgrade && pip install --extra-index-url https://developer.download.nvidia.com/compute/redist --upgrade nvidia-dali-cuda110
+python -m install pip --upgrade && pip install --extra-index-url https://developer.download.nvidia.com/compute/redist --upgrade nvidia-dali-cuda110
 # DALI examples
-pip3 install 
+python -m pip install numpy
 git clone https://github.com/NVIDIA/DALI
 git clone https://github.com/NVIDIA/DALI_extra.git
 ```
@@ -74,9 +74,12 @@ git clone https://github.com/NVIDIA/DALI_extra.git
 
 ```bash
 # for python scripts
+cat ~/.bashrc
 cat >> ~/.bashrc <<EOF
 export DALI_EXTRA_PATH="/home/jovyan/DALI_extra"
 EOF
+chmod a+x ~/.bashrc
+
 # for notebooks
 ipython profile create
 cat > ~/.ipython/profile_default/startup/00-dali.py <<EOF
@@ -84,6 +87,7 @@ import os
 os.environ['DALI_EXTRA_PATH'] = "/home/jovyan/DALI_extra"
 EOF
 # to see the list scripts that need DALI_EXTRA_PATH
+cd DALI
 grep -R --include *.ipynb --include *.py DALI_EXTRA ~/DALI
 ```
 
@@ -119,3 +123,24 @@ Run the following from Jupyter Notebook UI.
 
 - Click ![Sessions](images/sessions.png)
 - Click on ![Jupyter icon](images/Screen%20Shot%202021-08-16%20at%2011.16.34%20AM.png).
+
+time python pytorch-lightning-dali-mnist.py --mode gpu_dali_better --gpus 1 --batch_size 128 --num_workers 1
+real    0m42.354s
+time python pytorch-lightning-dali-mnist.py --mode gpu_dali --batch_size 128 --num_workers 1
+real    0m56.414s
+time python pytorch-lightning-dali-mnist.py --mode gpu_dali --gpus 1 --batch_size 128 --num_workers 1
+real    0m43.863s
+time python pytorch-lightning-dali-mnist.py --mode cpu --batch_size 128 --num_workers 1
+real    2m28.856s
+time python pytorch-lightning-dali-mnist.py --mode gpu --gpus 1 --batch_size 128 --num_workers 1
+real    2m21.803s
+
+
+time python pytorch-lightning-dali-mnist.py --mode gpu_dali_better --gpus 1 --batch_size 128 --num_workers 2
+real    0m48.014s
+
+time python pytorch-lightning-dali-mnist.py --mode gpu_dali_better --gpus 1 --batch_size 128 --num_workers 3
+real    0m46.613s
+
+time python pytorch-lightning-dali-mnist.py --mode gpu_dali_better --gpus 1 --batch_size 128 --num_workers 4
+real    0m47.048s

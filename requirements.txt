@@ -15,6 +15,7 @@ matplotlib
 pytorch-lightning
 torch
 torchvision
+numpy
 
 # parser
 ConfigArgParse

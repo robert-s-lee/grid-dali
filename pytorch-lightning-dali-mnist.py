@@ -156,7 +156,8 @@ class BetterDALILitMNIST(LitMNIST):
         device_id = self.local_rank
         shard_id = self.global_rank
         num_shards = self.trainer.world_size
-        mnist_pipeline = GetMnistPipeline(batch_size=args.batch_size, device='gpu', device_id=device_id, shard_id=shard_id, num_shards=num_shards, num_threads=args.num_workers)
+        mnist_pipeline = GetMnistPipeline(batch_size=args.batch_size, device='gpu', 
+        device_id=device_id, shard_id=shard_id, num_shards=num_shards, num_threads=args.num_workers)
 
         class LightningWrapper(DALIClassificationIterator):
             def __init__(self, *kargs, **kvargs):
@@ -175,8 +176,60 @@ class BetterDALILitMNIST(LitMNIST):
     def train_dataloader(self):
         return self.train_loader
 
+def run_cpu():
+    # run with CPU
+    print("Running CPU")
+    print("----------------------------")
+    model = LitMNIST()
+    logger = TensorBoardLogger("lightning_logs", name="pl_cpu_mnist")
+    trainer = Trainer(gpus=0, strategy=args.strategy, max_epochs=args.max_epochs, logger=logger,
+      precision=args.precision)
+    trainer.fit(model)    
 
-# In[ ]:
+def run_gpu():
+    # run with one GPU
+    print("Running GPU")
+    print("----------------------------")
+    if torch.cuda.device_count()>0:
+      model = LitMNIST()
+      logger = TensorBoardLogger("lightning_logs", name="pl_gpu_mnist")
+      trainer = Trainer(gpus=args.gpus, strategy=args.strategy, max_epochs=args.max_epochs, logger=logger,
+        precision=args.precision)
+      trainer.fit(model)
+
+def run_gpu_dali():
+    print("Running GPU with DALI")
+    print("----------------------------")
+    if torch.cuda.device_count()>0:
+      # Even if previous Trainer finished his work it still keeps the GPU booked, force it to release the device.
+      if 'PL_TRAINER_GPUS' in os.environ:
+          os.environ.pop('PL_TRAINER_GPUS')
+      model = DALILitMNIST()
+      logger = TensorBoardLogger("lightning_logs", name="pl_dali_mnist")
+      trainer = Trainer(gpus=args.gpus, strategy=args.strategy, max_epochs=args.max_epochs, logger=logger,
+        precision=args.precision)
+      trainer.fit(model)
+
+def run_gpu_dali_better():
+    print("Running GPU with Better DALI")
+    print("----------------------------")
+    if torch.cuda.device_count()>0:
+      # Even if previous Trainer finished his work it still keeps the GPU booked, force it to release the device.
+      if 'PL_TRAINER_GPUS' in os.environ:
+          os.environ.pop('PL_TRAINER_GPUS')
+      model = BetterDALILitMNIST()
+      logger = TensorBoardLogger("lightning_logs", name="pl_dali_iterator_mnist")
+      trainer = Trainer(gpus=args.gpus, strategy=args.strategy, max_epochs=args.max_epochs, logger=logger,
+        precision=args.precision)
+      trainer.fit(model)      
+
+mode_to_func = {
+  'cpu':run_cpu,
+  'gpu':run_gpu,
+  'gpu_dali':run_gpu_dali,
+  'gpu_dali_better':run_gpu_dali_better,
+}
+
 
 if __name__ == '__main__':
     from configargparse import ArgumentParser
@@ -194,56 +247,20 @@ if __name__ == '__main__':
     parser.add_argument('--gpus', type=int, default=0, env_var="MNIST_GPU")
     parser.add_argument('--lr', type=float, default=1e-3, env_var="MNIST_LR")
     parser.add_argument('--batch_size', type=int, default=64, env_var="MNIST_BATCH_SIZE")
-    parser.add_argument('--max_epochs', type=int, default=1, env_var="MNIST_MAX_EPOCHS")
+    parser.add_argument('--max_epochs', type=int, default=10, env_var="MNIST_MAX_EPOCHS")
     parser.add_argument('--data_dir', type=str, default=os.getcwd(), env_var="MNIST_DATA_DIR")
     parser.add_argument('--dali_data_dir', type=str, default=os.getcwd(), env_var="DALI_EXTRA_PATH")
     parser.add_argument('--num_workers', type=int, default=os.cpu_count())
-    parser.add_argument('--distributed_backend', type=str, default=None, help="use to enable ddp")  # ddp ddp work only in no-interactive mode,
+    parser.add_argument('--mode', type=str, default='cpu', choices=mode_to_func.keys())
+    parser.add_argument('--strategy', type=str, default=None, choices=["ddp","deepspeed_stage_3_offload"])  # ddp ddp work only in no-interactive mode,
+    parser.add_argument('--precision', type=int, default=32, choices=[16,32])  
 
     if '__file__' in globals():
         args = parser.parse_args()    # process the arg 
     else:
         args = parser.parse_args("")  # take defaults in Jupyter    
 
-    print(args)
-
     # Path to MNIST dataset in DALI
     data_path = os.path.join(args.dali_data_dir, 'db/MNIST/training/')
-    # run with CPU
-    print("Running CPU")
-    print("----------------------------")
-    model = LitMNIST()
-    logger = TensorBoardLogger("lightning_logs", name="pl_cpu_mnist")
-    trainer = Trainer(gpus=0, accelerator=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
-    trainer.fit(model)    
 
-    # run with one GPU
-    print("Running GPU")
-    print("----------------------------")
-    if torch.cuda.device_count()>0:
-      model = LitMNIST()
-      logger = TensorBoardLogger("lightning_logs", name="pl_gpu_mnist")
-      trainer = Trainer(gpus=args.gpus, accelerator=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
-      trainer.fit(model)
-
-    print("Running GPU with DALI")
-    print("----------------------------")
-    if torch.cuda.device_count()>0:
-      # Even if previous Trainer finished his work it still keeps the GPU booked, force it to release the device.
-      if 'PL_TRAINER_GPUS' in os.environ:
-          os.environ.pop('PL_TRAINER_GPUS')
-      model = DALILitMNIST()
-      logger = TensorBoardLogger("lightning_logs", name="pl_dali_mnist")
-      trainer = Trainer(gpus=args.gpus, accelerator=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
-      trainer.fit(model)
-
-    print("Running GPU with Better DALI")
-    print("----------------------------")
-    if torch.cuda.device_count()>0:
-      # Even if previous Trainer finished his work it still keeps the GPU booked, force it to release the device.
-      if 'PL_TRAINER_GPUS' in os.environ:
-          os.environ.pop('PL_TRAINER_GPUS')
-      model = BetterDALILitMNIST()
-      logger = TensorBoardLogger("lightning_logs", name="pl_dali_iterator_mnist")
-      trainer = Trainer(gpus=args.gpus, accelerator=args.distributed_backend, max_epochs=args.max_epochs, logger=logger)
-      trainer.fit(model)      
+    mode_to_func[args.mode]()
